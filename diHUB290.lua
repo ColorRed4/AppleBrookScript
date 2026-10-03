@@ -24,8 +24,8 @@ local RGBGeneration = 0
 
 local DARK = Color3.fromRGB(7, 7, 7)
 local DARK2 = Color3.fromRGB(12, 12, 12)
-local RED = Color3.fromRGB(220, 0, 0)
-local RED2 = Color3.fromRGB(145, 0, 0)
+local BURGUNDY = Color3.fromRGB(120, 0, 0)
+local BURGUNDY2 = Color3.fromRGB(95, 0, 0)
 local WHITE = Color3.fromRGB(255, 255, 255)
 local BLACK = Color3.fromRGB(0, 0, 0)
 
@@ -72,7 +72,7 @@ local function createButton(parent, text, size, position, color)
     b.AutoButtonColor = false
     b.Size = size
     b.Position = position
-    b.BackgroundColor3 = color or RED
+    b.BackgroundColor3 = color or BURGUNDY
     b.BorderSizePixel = 0
     b.Text = text
     b.TextColor3 = WHITE
@@ -106,7 +106,7 @@ local function makeDraggable(object, handle)
         end
     end)
 
-  UserInputService.InputChanged:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)
         if not dragging then
             return
         end
@@ -199,7 +199,7 @@ local HomeButton = createButton(
     "home",
     UDim2.new(1, -8, 0, 43),
     UDim2.new(0, 4, 0, 4),
-    RED
+    BURGUNDY
 )
 
 local NameButton = createButton(
@@ -207,7 +207,7 @@ local NameButton = createButton(
     "name / skin",
     UDim2.new(1, -8, 0, 43),
     UDim2.new(0, 4, 0, 52),
-    RED
+    BURGUNDY
 )
 
 local TrollButton = createButton(
@@ -215,7 +215,7 @@ local TrollButton = createButton(
     "troll",
     UDim2.new(1, -8, 0, 43),
     UDim2.new(0, 4, 0, 100),
-    RED2
+    BURGUNDY
 )
 
 local CodesButton = createButton(
@@ -223,18 +223,18 @@ local CodesButton = createButton(
     "codes",
     UDim2.new(1, -8, 0, 43),
     UDim2.new(0, 4, 0, 148),
-    RED2
+    BURGUNDY
 )
 
 local Version = createText(
     Side,
     "V1.0",
     UDim2.new(1, 0, 0, 28),
-    UDim2.new(0, 0, 0, 195),
+    UDim2.new(0, 0, 0, 208),
     17
 )
 
-Version.TextColor3 = RED
+Version.TextColor3 = BURGUNDY
 Version.TextXAlignment = Enum.TextXAlignment.Center
 
 local AllScripts = createButton(
@@ -242,7 +242,7 @@ local AllScripts = createButton(
     "All scripts",
     UDim2.new(1, -8, 0, 43),
     UDim2.new(0, 4, 1, -47),
-    RED2
+    BURGUNDY
 )
 
 local HomePage = Instance.new("Frame")
@@ -252,23 +252,41 @@ HomePage.Size = UDim2.new(1, -105, 1, -50)
 HomePage.Position = UDim2.new(0, 8, 0, 45)
 HomePage.Parent = Main
 
-local HomeLanguage = createText(
-    HomePage,
-    "language:",
-    UDim2.new(0, 250, 0, 35),
-    UDim2.new(0, 32, 0, 115),
-    19
+local LanguageBox = Instance.new("Frame")
+LanguageBox.Name = "LanguageBox"
+LanguageBox.Size = UDim2.new(0, 235, 0, 88)
+LanguageBox.Position = UDim2.new(0, 28, 0, 102)
+LanguageBox.BackgroundColor3 = DARK2
+LanguageBox.BorderSizePixel = 0
+LanguageBox.Parent = HomePage
+
+createCorner(LanguageBox, 8)
+
+local LanguageStroke = createStroke(
+    LanguageBox,
+    BURGUNDY,
+    2
 )
+
+local HomeLanguage = createText(
+    LanguageBox,
+    "language:",
+    UDim2.new(1, -20, 0, 30),
+    UDim2.new(0, 10, 0, 5),
+    17
+)
+
+HomeLanguage.TextXAlignment = Enum.TextXAlignment.Center
 
 local LanguageButton = Instance.new("TextButton")
 LanguageButton.BackgroundTransparency = 1
-LanguageButton.Size = UDim2.new(0, 220, 0, 45)
-LanguageButton.Position = UDim2.new(0, 30, 0, 150)
+LanguageButton.Size = UDim2.new(1, -20, 0, 42)
+LanguageButton.Position = UDim2.new(0, 10, 0, 38)
 LanguageButton.Text = "RUS / ENG"
 LanguageButton.TextColor3 = WHITE
 LanguageButton.Font = Enum.Font.GothamBold
-LanguageButton.TextSize = 23
-LanguageButton.Parent = HomePage
+LanguageButton.TextSize = 21
+LanguageButton.Parent = LanguageBox
 
 local NamePage = Instance.new("Frame")
 NamePage.Name = "NamePage"
@@ -400,7 +418,7 @@ local RGBButton = createButton(
     "RGB: OFF",
     UDim2.new(0, 120, 0, 36),
     UDim2.new(0.5, -60, 1, -45),
-    RED2
+    BURGUNDY2
 )
 
 local CodesPage = Instance.new("Frame")
@@ -420,11 +438,12 @@ local CodesTitle = createText(
 )
 
 local CodesScroll = Instance.new("ScrollingFrame")
-CodesScroll.Size = UDim2.new(1, -20, 1, -35)
+CodesScroll.Size = UDim2.new(1, -20, 0, 205)
 CodesScroll.Position = UDim2.new(0, 5, 0, 35)
 CodesScroll.BackgroundTransparency = 1
 CodesScroll.BorderSizePixel = 0
-CodesScroll.ScrollBarThickness = 0
+CodesScroll.ScrollBarThickness = 5
+CodesScroll.ScrollBarImageColor3 = BURGUNDY
 CodesScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 CodesScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 CodesScroll.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -506,6 +525,7 @@ for index, data in ipairs(CodesData) do
         copyText(data[2])
     end)
 end
+
 local AllScriptsPage = Instance.new("Frame")
 AllScriptsPage.Name = "AllScriptsPage"
 AllScriptsPage.BackgroundTransparency = 1
@@ -527,7 +547,7 @@ local ScriptButton1 = createButton(
     "Infinity yield",
     UDim2.new(0, 168, 0, 42),
     UDim2.new(0, 5, 0, 28),
-    RED
+    BURGUNDY
 )
 
 local ScriptButton2 = createButton(
@@ -535,7 +555,7 @@ local ScriptButton2 = createButton(
     "®4D",
     UDim2.new(0, 168, 0, 42),
     UDim2.new(0, 5, 0, 76),
-    RED
+    BURGUNDY
 )
 
 local ScriptButton3 = createButton(
@@ -543,7 +563,7 @@ local ScriptButton3 = createButton(
     "Targeter",
     UDim2.new(0, 168, 0, 42),
     UDim2.new(0, 5, 0, 124),
-    RED
+    BURGUNDY
 )
 
 local ScriptButton4 = createButton(
@@ -551,7 +571,7 @@ local ScriptButton4 = createButton(
     "Btr X client",
     UDim2.new(0, 168, 0, 42),
     UDim2.new(0, 5, 0, 172),
-    RED
+    BURGUNDY
 )
 
 local EmptyScriptButton = createButton(
@@ -559,22 +579,24 @@ local EmptyScriptButton = createButton(
     "",
     UDim2.new(0, 168, 0, 42),
     UDim2.new(0, 5, 0, 220),
-    RED2
+    BURGUNDY2
 )
 
 local MenuButton = createButton(
     gui,
     "MENU",
-    UDim2.new(0, 115, 0, 42),
-    UDim2.new(0, 70, 0.5, -21),
-    Color3.fromRGB(5, 5, 5)
+    UDim2.new(0, 105, 0, 38),
+    UDim2.new(0, 70, 0.5, -19),
+    Color3.fromRGB(8, 8, 8)
 )
 
-MenuButton.TextSize = 16
+MenuButton.TextSize = 15
+MenuButton.TextColor3 = WHITE
+MenuButton.Font = Enum.Font.GothamBold
 
-createStroke(
+local MenuStroke = createStroke(
     MenuButton,
-    Color3.fromRGB(150, 0, 0),
+    Color3.fromRGB(255, 0, 0),
     2
 )
 
@@ -690,6 +712,11 @@ local function applySpeed()
     SpeedBox.Text = tostring(value)
 
     RGBGeneration = RGBGeneration + 1
+
+    if RGBEnabled then
+        task.wait()
+        startRGB()
+    end
 end
 
 SpeedBox.FocusLost:Connect(function()
@@ -721,7 +748,7 @@ local function stopRGB()
     setNameColor(SelectedColor)
 end
 
-local function startRGB()
+function startRGB()
     RGBEnabled = true
     RGBGeneration = RGBGeneration + 1
 
@@ -786,11 +813,11 @@ RGBButton.MouseButton1Click:Connect(function()
     if RGBEnabled then
         stopRGB()
         RGBButton.Text = "RGB: OFF"
-        RGBButton.BackgroundColor3 = RED2
+        RGBButton.BackgroundColor3 = BURGUNDY2
     else
         startRGB()
         RGBButton.Text = "RGB: ON"
-        RGBButton.BackgroundColor3 = RED
+        RGBButton.BackgroundColor3 = BURGUNDY
     end
 end)
 
@@ -857,7 +884,6 @@ end)
 
 MenuButton.MouseButton1Click:Connect(function()
     MenuOpen = not MenuOpen
-
     Main.Visible = MenuOpen
 end)
 
@@ -898,6 +924,7 @@ borderConnection = RunService.RenderStepped:Connect(function()
 
     MainStroke.Color = color
     SideStroke.Color = color
+    MenuStroke.Color = color
 end)
 
 showPage(HomePage, "home")
