@@ -1,102 +1,113 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 pcall(function()
-    local old = PlayerGui:FindFirstChild("EtraxonMenu")
+    local old = PlayerGui:FindFirstChild("EtraxonCommunity")
     if old then
         old:Destroy()
     end
 end)
 
-local Language = "RU"
-local CurrentPage = "HOME"
-local MenuOpen = true
+local CurrentLanguage = "EN"
+local MainOpen = true
 
 local SelectedColor = Color3.fromRGB(255, 0, 0)
-local AnimationSpeed = 2
-local RGBEnabled = false
-local RGBGeneration = 0
+local AnimationSpeed = 10
+local RGBEnabled = true
+local CurrentPage = "home"
 
-local DARK = Color3.fromRGB(7, 7, 7)
-local DARK2 = Color3.fromRGB(12, 12, 12)
-local BURGUNDY = Color3.fromRGB(120, 0, 0)
-local BURGUNDY2 = Color3.fromRGB(95, 0, 0)
-local WHITE = Color3.fromRGB(255, 255, 255)
-local BLACK = Color3.fromRGB(0, 0, 0)
+local DARK = Color3.fromRGB(8, 9, 14)
+local DARK2 = Color3.fromRGB(13, 14, 22)
+local PANEL = Color3.fromRGB(16, 17, 26)
+local PANEL2 = Color3.fromRGB(20, 21, 31)
+local TEXT = Color3.fromRGB(245, 245, 250)
+local MUTED = Color3.fromRGB(155, 158, 175)
+local BORDER = Color3.fromRGB(70, 75, 100)
+local SIDE = Color3.fromRGB(110, 0, 35)
+local SIDE_HOVER = Color3.fromRGB(145, 0, 45)
 
-local gui = Instance.new("ScreenGui")
-gui.Name = "EtraxonMenu"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.DisplayOrder = 999
-gui.Parent = PlayerGui
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "EtraxonCommunity"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.DisplayOrder = 999
+Gui.Parent = PlayerGui
 
-local function createCorner(parent, radius)
+local function corner(obj, radius)
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, radius)
-    c.Parent = parent
+    c.CornerRadius = UDim.new(0, radius or 10)
+    c.Parent = obj
     return c
 end
 
-local function createStroke(parent, color, thickness)
+local function stroke(obj, thickness)
     local s = Instance.new("UIStroke")
-    s.Color = color
-    s.Thickness = thickness
+    s.Thickness = thickness or 1.5
     s.Transparency = 0
-    s.Parent = parent
+    s.Parent = obj
     return s
 end
 
-local function createText(parent, text, size, position, fontSize)
+local function makeText(parent, text, size, font)
     local t = Instance.new("TextLabel")
     t.BackgroundTransparency = 1
-    t.Size = size
-    t.Position = position
     t.Text = text
-    t.TextColor3 = WHITE
-    t.Font = Enum.Font.GothamBold
-    t.TextSize = fontSize
-    t.TextXAlignment = Enum.TextXAlignment.Left
-    t.TextYAlignment = Enum.TextYAlignment.Center
+    t.TextColor3 = TEXT
+    t.TextSize = size or 14
+    t.Font = font or Enum.Font.GothamBold
     t.Parent = parent
     return t
 end
 
-local function createButton(parent, text, size, position, color)
+local function makeButton(parent, text)
     local b = Instance.new("TextButton")
     b.AutoButtonColor = false
-    b.Size = size
-    b.Position = position
-    b.BackgroundColor3 = color or BURGUNDY
-    b.BorderSizePixel = 0
+    b.BackgroundColor3 = PANEL2
     b.Text = text
-    b.TextColor3 = WHITE
+    b.TextColor3 = TEXT
+    b.TextSize = 15
     b.Font = Enum.Font.GothamBold
-    b.TextSize = 14
     b.Parent = parent
-    createCorner(b, 7)
+    corner(b, 9)
+    stroke(b, 1)
     return b
 end
 
-local function makeDraggable(object, handle)
-    handle = handle or object
+local function rainbowStroke(s)
+    task.spawn(function()
+        local h = 0
+        while s and s.Parent do
+            h = (h + 0.003) % 1
+            s.Color = Color3.fromHSV(h, 0.9, 1)
+            RunService.RenderStepped:Wait()
+        end
+    end)
+end
 
+local function makeRainbowBorder(obj, thickness)
+    local s = stroke(obj, thickness or 2)
+    rainbowStroke(s)
+    return s
+end
+
+local function makeDraggable(obj)
     local dragging = false
     local dragStart
-    local startPosition
+    local startPos
 
-    handle.InputBegan:Connect(function(input)
+    obj.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
+            or input.UserInputType == Enum.UserInputType.Touch then
 
             dragging = true
             dragStart = input.Position
-            startPosition = object.Position
+            startPos = obj.Position
 
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -112,823 +123,733 @@ local function makeDraggable(object, handle)
         end
 
         if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
+            or input.UserInputType == Enum.UserInputType.Touch then
 
             local delta = input.Position - dragStart
 
-            object.Position = UDim2.new(
-                startPosition.X.Scale,
-                startPosition.X.Offset + delta.X,
-                startPosition.Y.Scale,
-                startPosition.Y.Offset + delta.Y
+            obj.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
             )
         end
     end)
+end
+
+local translations = {
+    EN = {
+        home = "home",
+        name = "name / skin",
+        codes = "codes",
+        all = "All script",
+        language = "language",
+        ruseng = "RUS / ENG",
+        made = "script made by Etraxon community",
+        community = "Etraxon community",
+        brookhaven = "Brookhaven RP",
+        rgbname = "RGB NAME",
+        speed = "speed animation",
+        menu = "MENU",
+        version = "V1.0",
+        copy = "Copied!",
+        animation = "Animation Hub"
+    },
+
+    RU = {
+        home = "главная",
+        name = "имя / скин",
+        codes = "коды",
+        all = "Все скрипты",
+        language = "язык",
+        ruseng = "РУС / ENG",
+        made = "скрипт сделан сообществом Etraxon",
+        community = "Сообщество Etraxon",
+        brookhaven = "Brookhaven RP",
+        rgbname = "ЦВЕТ ИМЕНИ",
+        speed = "скорость переливания",
+        menu = "МЕНЮ",
+        version = "V1.0",
+        copy = "Скопировано!",
+        animation = "Animation Hub"
+    }
+}
+
+local function T(key)
+    return translations[CurrentLanguage][key] or key
 end
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.new(0, 550, 0, 310)
-Main.Position = UDim2.new(0.5, -275, 0.5, -155)
+Main.Size = UDim2.new(0, 760, 0, 590)
+Main.Position = UDim2.new(0.5, -380, 0.5, -295)
 Main.BackgroundColor3 = DARK
-Main.BorderSizePixel = 0
-Main.Parent = gui
-
-createCorner(Main, 10)
-
-local MainStroke = createStroke(
-    Main,
-    Color3.fromRGB(150, 0, 0),
-    2
-)
+Main.BackgroundTransparency = 0.08
+Main.Parent = Gui
+corner(Main, 18)
+makeRainbowBorder(Main, 2.5)
+makeDraggable(Main)
 
 local Header = Instance.new("Frame")
 Header.BackgroundTransparency = 1
-Header.Size = UDim2.new(1, -105, 0, 42)
-Header.Position = UDim2.new(0, 8, 0, 0)
+Header.Size = UDim2.new(1, -30, 0, 70)
+Header.Position = UDim2.new(0, 15, 0, 10)
 Header.Parent = Main
 
-local Title = createText(
-    Header,
-    "home",
-    UDim2.new(0, 150, 1, 0),
-    UDim2.new(0, 0, 0, 0),
-    18
-)
+local Title = makeText(Header, "home", 28)
+Title.Position = UDim2.new(0, 15, 0, 8)
+Title.Size = UDim2.new(0, 300, 0, 35)
+Title.TextXAlignment = Enum.TextXAlignment.Left
 
-local Credit = createText(
-    Header,
-    "script made by Etraxon community",
-    UDim2.new(1, -145, 1, 0),
-    UDim2.new(0, 140, 0, 0),
-    16
-)
+local Credits = makeText(Header, T("made"), 17)
+Credits.Position = UDim2.new(0, 300, 0, 13)
+Credits.Size = UDim2.new(1, -300, 0, 30)
+Credits.TextXAlignment = Enum.TextXAlignment.Right
 
-Credit.TextXAlignment = Enum.TextXAlignment.Right
-Credit.Active = true
+local CreditsButton = Instance.new("TextButton")
+CreditsButton.BackgroundTransparency = 1
+CreditsButton.Text = ""
+CreditsButton.Size = Credits.Size
+CreditsButton.Position = Credits.Position
+CreditsButton.Parent = Header
 
-Credit.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        pcall(function()
-            if setclipboard then
-                setclipboard("https://t.me/Etraxon")
-            end
-        end)
+CreditsButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        setclipboard("https://t.me/Etraxon")
+    end)
+end)
+
+local HeaderLine = Instance.new("Frame")
+HeaderLine.BorderSizePixel = 0
+HeaderLine.BackgroundColor3 = BORDER
+HeaderLine.Size = UDim2.new(1, 0, 0, 1)
+HeaderLine.Position = UDim2.new(0, 0, 1, -1)
+HeaderLine.Parent = Header
+
+local Sidebar = Instance.new("Frame")
+Sidebar.BackgroundColor3 = Color3.fromRGB(11, 12, 19)
+Sidebar.Size = UDim2.new(0, 200, 1, -105)
+Sidebar.Position = UDim2.new(0, 15, 0, 90)
+Sidebar.Parent = Main
+corner(Sidebar, 15)
+makeRainbowBorder(Sidebar, 2)
+
+local SidePadding = Instance.new("UIPadding")
+SidePadding.PaddingTop = UDim.new(0, 12)
+SidePadding.PaddingLeft = UDim.new(0, 10)
+SidePadding.PaddingRight = UDim.new(0, 10)
+SidePadding.Parent = Sidebar
+
+local SideLayout = Instance.new("UIListLayout")
+SideLayout.Padding = UDim.new(0, 10)
+SideLayout.SortOrder = Enum.SortOrder.LayoutOrder
+SideLayout.Parent = Sidebar
+
+local HomeButton = makeButton(Sidebar, T("home"))
+local NameButton = makeButton(Sidebar, T("name"))
+local CodesButton = makeButton(Sidebar, T("codes"))
+local AllButton = makeButton(Sidebar, T("all"))
+
+HomeButton.Size = UDim2.new(1, 0, 0, 65)
+NameButton.Size = UDim2.new(1, 0, 0, 65)
+CodesButton.Size = UDim2.new(1, 0, 0, 65)
+AllButton.Size = UDim2.new(1, 0, 0, 65)
+
+local Version = makeText(Sidebar, T("version"), 16)
+Version.Size = UDim2.new(1, 0, 0, 30)
+Version.Position = UDim2.new(0, 0, 1, -45)
+Version.TextColor3 = MUTED
+
+local Content = Instance.new("Frame")
+Content.BackgroundColor3 = Color3.fromRGB(7, 8, 13)
+Content.BackgroundTransparency = 0.18
+Content.Size = UDim2.new(1, -240, 1, -105)
+Content.Position = UDim2.new(0, 225, 0, 90)
+Content.Parent = Main
+corner(Content, 15)
+stroke(Content, 1.5)
+
+local MenuButton = Instance.new("TextButton")
+MenuButton.Name = "MenuButton"
+MenuButton.Size = UDim2.new(0, 175, 0, 60)
+MenuButton.Position = UDim2.new(0.5, -87, 0, 12)
+MenuButton.BackgroundColor3 = Color3.fromRGB(11, 12, 19)
+MenuButton.Text = T("menu")
+MenuButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MenuButton.TextSize = 18
+MenuButton.Font = Enum.Font.GothamBold
+MenuButton.AutoButtonColor = false
+MenuButton.Parent = Gui
+corner(MenuButton, 14)
+makeRainbowBorder(MenuButton, 2.5)
+makeDraggable(MenuButton)
+
+MenuButton.MouseEnter:Connect(function()
+    TweenService:Create(
+        MenuButton,
+        TweenInfo.new(0.15),
+        {BackgroundColor3 = Color3.fromRGB(20, 21, 31)}
+    ):Play()
+end)
+
+MenuButton.MouseLeave:Connect(function()
+    TweenService:Create(
+        MenuButton,
+        TweenInfo.new(0.15),
+        {BackgroundColor3 = Color3.fromRGB(11, 12, 19)}
+    ):Play()
+end)
+
+local function clearContent()
+    for _, v in ipairs(Content:GetChildren()) do
+        v:Destroy()
+    end
+end
+
+local function createContentTitle(text)
+    local title = makeText(Content, text, 25)
+    title.Position = UDim2.new(0, 25, 0, 18)
+    title.Size = UDim2.new(1, -50, 0, 35)
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    return title
+end
+
+local function notify(text)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Etraxon",
+            Text = text,
+            Duration = 2
+        })
+    end)
+end
+
+local function setRPNameColor(color)
+    SelectedColor = color
+
+    pcall(function()
+        local re = ReplicatedStorage:FindFirstChild("RE")
+        if not re then
+            return
+        end
+
+        local remote = re:FindFirstChild("1RPNam1eColo1r")
+        if remote then
+            remote:FireServer("PickingRPNameColor", color)
+        end
+    end)
+end
+
+local function getGradientColor(position)
+    position = math.clamp(position, 0, 1)
+
+    if position < 0.5 then
+        local alpha = position * 2
+        return Color3.new(
+            SelectedColor.R * alpha,
+            SelectedColor.G * alpha,
+            SelectedColor.B * alpha
+        )
+    else
+        local alpha = (position - 0.5) * 2
+        return Color3.new(
+            SelectedColor.R + (1 - SelectedColor.R) * alpha,
+            SelectedColor.G + (1 - SelectedColor.G) * alpha,
+            SelectedColor.B + (1 - SelectedColor.B) * alpha
+        )
+    end
+end
+
+local RGBRunning = true
+
+task.spawn(function()
+    local hue = 0
+
+    while RGBRunning do
+        if RGBEnabled then
+            local speed = math.clamp(tonumber(AnimationSpeed) or 10, 0.1, 100)
+
+            hue = (hue + (speed / 10000)) % 1
+
+            local color = Color3.fromHSV(hue, 1, 1)
+
+            setRPNameColor(color)
+
+            task.wait(0.03)
+        else
+            task.wait(0.1)
+        end
     end
 end)
 
-local Side = Instance.new("Frame")
-Side.Name = "Side"
-Side.Size = UDim2.new(0, 92, 1, -10)
-Side.Position = UDim2.new(1, -97, 0, 5)
-Side.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
-Side.BorderSizePixel = 0
-Side.Parent = Main
+local function createHome()
+    clearContent()
 
-createCorner(Side, 8)
+    local title = createContentTitle(T("home"))
 
-local SideStroke = createStroke(
-    Side,
-    Color3.fromRGB(120, 0, 0),
-    1.5
-)
+    local community = makeText(Content, T("community"), 28)
+    community.Position = UDim2.new(0, 32, 0, 85)
+    community.Size = UDim2.new(1, -64, 0, 45)
+    community.TextXAlignment = Enum.TextXAlignment.Left
 
-local HomeButton = createButton(
-    Side,
-    "home",
-    UDim2.new(1, -8, 0, 43),
-    UDim2.new(0, 4, 0, 4),
-    BURGUNDY
-)
+    local brook = makeText(Content, T("brookhaven"), 17)
+    brook.Position = UDim2.new(0, 32, 0, 130)
+    brook.Size = UDim2.new(1, -64, 0, 30)
+    brook.TextXAlignment = Enum.TextXAlignment.Left
+    brook.TextColor3 = MUTED
 
-local NameButton = createButton(
-    Side,
-    "name / skin",
-    UDim2.new(1, -8, 0, 43),
-    UDim2.new(0, 4, 0, 52),
-    BURGUNDY
-)
+    local LanguageBox = Instance.new("TextButton")
+    LanguageBox.BackgroundColor3 = Color3.fromRGB(10, 11, 17)
+    LanguageBox.Size = UDim2.new(0, 385, 0, 145)
+    LanguageBox.Position = UDim2.new(0, 32, 0, 185)
+    LanguageBox.Text = ""
+    LanguageBox.AutoButtonColor = false
+    LanguageBox.Parent = Content
+    corner(LanguageBox, 15)
+    stroke(LanguageBox, 2).Color = BORDER
 
-local TrollButton = createButton(
-    Side,
-    "troll",
-    UDim2.new(1, -8, 0, 43),
-    UDim2.new(0, 4, 0, 100),
-    BURGUNDY
-)
+    local languageTitle = makeText(LanguageBox, T("language"), 17)
+    languageTitle.Size = UDim2.new(1, 0, 0, 30)
+    languageTitle.Position = UDim2.new(0, 0, 0, 20)
+    languageTitle.TextColor3 = MUTED
 
-local CodesButton = createButton(
-    Side,
-    "codes",
-    UDim2.new(1, -8, 0, 43),
-    UDim2.new(0, 4, 0, 148),
-    BURGUNDY
-)
+    local languageValue = makeText(LanguageBox, T("ruseng"), 25)
+    languageValue.Size = UDim2.new(1, 0, 0, 40)
+    languageValue.Position = UDim2.new(0, 0, 0, 67)
 
-local Version = createText(
-    Side,
-    "V1.0",
-    UDim2.new(1, 0, 0, 28),
-    UDim2.new(0, 0, 0, 208),
-    17
-)
+    LanguageBox.MouseButton1Click:Connect(function()
+        if CurrentLanguage == "EN" then
+            CurrentLanguage = "RU"
+        else
+            CurrentLanguage = "EN"
+        end
 
-Version.TextColor3 = BURGUNDY
-Version.TextXAlignment = Enum.TextXAlignment.Center
+        HomeButton.Text = T("home")
+        NameButton.Text = T("name")
+        CodesButton.Text = T("codes")
+        AllButton.Text = T("all")
+        MenuButton.Text = T("menu")
+        Version.Text = T("version")
+        Credits.Text = T("made")
 
-local AllScripts = createButton(
-    Side,
-    "All scripts",
-    UDim2.new(1, -8, 0, 43),
-    UDim2.new(0, 4, 1, -47),
-    BURGUNDY
-)
+        createHome()
+    end)
+end
 
-local HomePage = Instance.new("Frame")
-HomePage.Name = "HomePage"
-HomePage.BackgroundTransparency = 1
-HomePage.Size = UDim2.new(1, -105, 1, -50)
-HomePage.Position = UDim2.new(0, 8, 0, 45)
-HomePage.Parent = Main
+local function createColorPicker(parent)
+    local picker = Instance.new("Frame")
+    picker.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    picker.Size = UDim2.new(1, -50, 0, 80)
+    picker.Position = UDim2.new(0, 25, 0, 65)
+    picker.Parent = parent
+    corner(picker, 12)
+    stroke(picker, 1.5).Color = BORDER
 
-local LanguageBox = Instance.new("Frame")
-LanguageBox.Name = "LanguageBox"
-LanguageBox.Size = UDim2.new(0, 235, 0, 88)
-LanguageBox.Position = UDim2.new(0, 28, 0, 102)
-LanguageBox.BackgroundColor3 = DARK2
-LanguageBox.BorderSizePixel = 0
-LanguageBox.Parent = HomePage
+    local hueGradient = Instance.new("UIGradient")
+    hueGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+        ColorSequenceKeypoint.new(0.25, SelectedColor),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(0.75, SelectedColor),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+    })
+    hueGradient.Parent = picker
 
-createCorner(LanguageBox, 8)
+    local bar = Instance.new("Frame")
+    bar.BackgroundTransparency = 1
+    bar.Size = UDim2.new(1, -24, 0, 30)
+    bar.Position = UDim2.new(0, 12, 0.5, -15)
+    bar.Parent = picker
 
-local LanguageStroke = createStroke(
-    LanguageBox,
-    BURGUNDY,
-    2
-)
+    local barGradient = Instance.new("UIGradient")
+    barGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0)),
+        ColorSequenceKeypoint.new(0.5, SelectedColor),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+    })
+    barGradient.Parent = bar
 
-local HomeLanguage = createText(
-    LanguageBox,
-    "language:",
-    UDim2.new(1, -20, 0, 30),
-    UDim2.new(0, 10, 0, 5),
-    17
-)
+    local point = Instance.new("Frame")
+    point.Size = UDim2.new(0, 18, 0, 18)
+    point.AnchorPoint = Vector2.new(0.5, 0.5)
+    point.Position = UDim2.new(0.5, 0, 0.5, 0)
+    point.BackgroundColor3 = Color3.new(1, 1, 1)
+    point.Parent = bar
+    corner(point, 20)
+    stroke(point, 2).Color = Color3.new(0, 0, 0)
 
-HomeLanguage.TextXAlignment = Enum.TextXAlignment.Center
+    local dragging = false
 
-local LanguageButton = Instance.new("TextButton")
-LanguageButton.BackgroundTransparency = 1
-LanguageButton.Size = UDim2.new(1, -20, 0, 42)
-LanguageButton.Position = UDim2.new(0, 10, 0, 38)
-LanguageButton.Text = "RUS / ENG"
-LanguageButton.TextColor3 = WHITE
-LanguageButton.Font = Enum.Font.GothamBold
-LanguageButton.TextSize = 21
-LanguageButton.Parent = LanguageBox
+    local function updateColor(x)
+        local left = bar.AbsolutePosition.X
+        local width = bar.AbsoluteSize.X
 
-local NamePage = Instance.new("Frame")
-NamePage.Name = "NamePage"
-NamePage.BackgroundTransparency = 1
-NamePage.Size = UDim2.new(1, -105, 1, -50)
-NamePage.Position = UDim2.new(0, 8, 0, 45)
-NamePage.Visible = false
-NamePage.Parent = Main
+        local value = math.clamp((x - left) / width, 0, 1)
 
-local RGBTitle = createText(
-    NamePage,
-    "RGB NAME",
-    UDim2.new(1, -15, 0, 30),
-    UDim2.new(0, 5, 0, 0),
-    19
-)
+        point.Position = UDim2.new(value, 0, 0.5, 0)
 
-RGBTitle.TextXAlignment = Enum.TextXAlignment.Center
+        local color
 
-local PaletteHolder = Instance.new("Frame")
-PaletteHolder.Size = UDim2.new(1, -30, 0, 42)
-PaletteHolder.Position = UDim2.new(0, 15, 0, 37)
-PaletteHolder.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-PaletteHolder.BorderSizePixel = 0
-PaletteHolder.Parent = NamePage
+        if value <= 0.5 then
+            local a = value * 2
+            color = Color3.new(
+                SelectedColor.R * a,
+                SelectedColor.G * a,
+                SelectedColor.B * a
+            )
+        else
+            local a = (value - 0.5) * 2
+            color = Color3.new(
+                SelectedColor.R + (1 - SelectedColor.R) * a,
+                SelectedColor.G + (1 - SelectedColor.G) * a,
+                SelectedColor.B + (1 - SelectedColor.B) * a
+            )
+        end
 
-createCorner(PaletteHolder, 9)
+        setRPNameColor(color)
+    end
 
-local Palette = Instance.new("Frame")
-Palette.Size = UDim2.new(1, -16, 0, 16)
-Palette.Position = UDim2.new(0, 8, 0.5, -8)
-Palette.BackgroundColor3 = WHITE
-Palette.BorderSizePixel = 0
-Palette.Parent = PaletteHolder
+    bar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
 
-createCorner(Palette, 8)
+            dragging = true
+            updateColor(input.Position.X)
+        end
+    end)
 
-local PaletteGradient = Instance.new("UIGradient")
-PaletteGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
-    ColorSequenceKeypoint.new(0.08, Color3.fromRGB(255, 60, 0)),
-    ColorSequenceKeypoint.new(0.16, Color3.fromRGB(255, 150, 0)),
-    ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 255, 0)),
-    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(80, 255, 0)),
-    ColorSequenceKeypoint.new(0.42, Color3.fromRGB(0, 255, 80)),
-    ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
-    ColorSequenceKeypoint.new(0.58, Color3.fromRGB(0, 120, 255)),
-    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(80, 0, 255)),
-    ColorSequenceKeypoint.new(0.76, Color3.fromRGB(180, 0, 255)),
-    ColorSequenceKeypoint.new(0.86, Color3.fromRGB(255, 0, 180)),
-    ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0))
-})
-PaletteGradient.Parent = Palette
+    UserInputService.InputChanged:Connect(function(input)
+        if not dragging then
+            return
+        end
 
-local PaletteButton = Instance.new("TextButton")
-PaletteButton.BackgroundTransparency = 1
-PaletteButton.Size = UDim2.new(1, 0, 1, 0)
-PaletteButton.Text = ""
-PaletteButton.ZIndex = 2
-PaletteButton.Parent = Palette
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
 
-local ColorKnob = Instance.new("Frame")
-ColorKnob.Size = UDim2.new(0, 24, 0, 24)
-ColorKnob.AnchorPoint = Vector2.new(0.5, 0.5)
-ColorKnob.Position = UDim2.new(0, 0, 0.5, 0)
-ColorKnob.BackgroundColor3 = SelectedColor
-ColorKnob.BorderSizePixel = 0
-ColorKnob.ZIndex = 5
-ColorKnob.Parent = Palette
+            updateColor(input.Position.X)
+        end
+    end)
 
-createCorner(ColorKnob, 50)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
 
-createStroke(
-    ColorKnob,
-    WHITE,
-    2
-)
+            dragging = false
+        end
+    end)
 
-local ColorPreview = Instance.new("Frame")
-ColorPreview.Size = UDim2.new(0, 20, 0, 20)
-ColorPreview.AnchorPoint = Vector2.new(0.5, 0.5)
-ColorPreview.Position = UDim2.new(0.5, 0, 0.5, 0)
-ColorPreview.BackgroundColor3 = SelectedColor
-ColorPreview.BorderSizePixel = 0
-ColorPreview.ZIndex = 6
-ColorPreview.Parent = ColorKnob
+    return picker
+end
 
-createCorner(ColorPreview, 50)
+local function createNamePage()
+    clearContent()
 
-local SpeedTitle = createText(
-    NamePage,
-    "speed animation",
-    UDim2.new(1, -15, 0, 30),
-    UDim2.new(0, 5, 0, 94),
-    19
-)
+    createContentTitle(T("name"))
 
-SpeedTitle.TextXAlignment = Enum.TextXAlignment.Center
+    local RGBLabel = makeText(Content, T("rgbname"), 17)
+    RGBLabel.Position = UDim2.new(0, 25, 0, 55)
+    RGBLabel.Size = UDim2.new(1, -50, 0, 25)
+    RGBLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-local SpeedBox = Instance.new("TextBox")
-SpeedBox.Size = UDim2.new(1, -30, 0, 43)
-SpeedBox.Position = UDim2.new(0, 15, 0, 128)
-SpeedBox.BackgroundColor3 = WHITE
-SpeedBox.BorderSizePixel = 0
-SpeedBox.Text = "2"
-SpeedBox.PlaceholderText = "2"
-SpeedBox.TextColor3 = BLACK
-SpeedBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
-SpeedBox.Font = Enum.Font.GothamBold
-SpeedBox.TextSize = 18
-SpeedBox.ClearTextOnFocus = false
-SpeedBox.Parent = NamePage
+    createColorPicker(Content)
 
-createCorner(SpeedBox, 7)
+    local SpeedLabel = makeText(Content, T("speed"), 17)
+    SpeedLabel.Position = UDim2.new(0, 25, 0, 175)
+    SpeedLabel.Size = UDim2.new(1, -50, 0, 25)
+    SpeedLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-local SpeedHint = createText(
-    NamePage,
-    "0.1 - 100",
-    UDim2.new(1, -30, 0, 20),
-    UDim2.new(0, 15, 0, 174),
-    11
-)
+    local SpeedBox = Instance.new("TextBox")
+    SpeedBox.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+    SpeedBox.TextColor3 = Color3.fromRGB(20, 20, 25)
+    SpeedBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 130)
+    SpeedBox.Text = tostring(AnimationSpeed)
+    SpeedBox.PlaceholderText = "1 - 100"
+    SpeedBox.TextSize = 17
+    SpeedBox.Font = Enum.Font.GothamBold
+    SpeedBox.ClearTextOnFocus = false
+    SpeedBox.Size = UDim2.new(1, -50, 0, 45)
+    SpeedBox.Position = UDim2.new(0, 25, 0, 210)
+    SpeedBox.Parent = Content
+    corner(SpeedBox, 8)
 
-SpeedHint.TextColor3 = Color3.fromRGB(130, 130, 130)
-SpeedHint.TextXAlignment = Enum.TextXAlignment.Center
+    SpeedBox.FocusLost:Connect(function()
+        local value = tonumber(SpeedBox.Text)
 
-local RGBButton = createButton(
-    NamePage,
-    "RGB: OFF",
-    UDim2.new(0, 120, 0, 36),
-    UDim2.new(0.5, -60, 1, -45),
-    BURGUNDY2
-)
+        if not value then
+            SpeedBox.Text = tostring(AnimationSpeed)
+            return
+        end
 
-local CodesPage = Instance.new("Frame")
-CodesPage.Name = "CodesPage"
-CodesPage.BackgroundTransparency = 1
-CodesPage.Size = UDim2.new(1, -105, 1, -50)
-CodesPage.Position = UDim2.new(0, 8, 0, 45)
-CodesPage.Visible = false
-CodesPage.Parent = Main
+        value = math.clamp(value, 0.1, 100)
 
-local CodesTitle = createText(
-    CodesPage,
-    "codes",
-    UDim2.new(1, -15, 0, 30),
-    UDim2.new(0, 5, 0, 0),
-    19
-)
+        AnimationSpeed = value
 
-local CodesScroll = Instance.new("ScrollingFrame")
-CodesScroll.Size = UDim2.new(1, -20, 0, 205)
-CodesScroll.Position = UDim2.new(0, 5, 0, 35)
-CodesScroll.BackgroundTransparency = 1
-CodesScroll.BorderSizePixel = 0
-CodesScroll.ScrollBarThickness = 5
-CodesScroll.ScrollBarImageColor3 = BURGUNDY
-CodesScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-CodesScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-CodesScroll.ScrollingDirection = Enum.ScrollingDirection.Y
-CodesScroll.Parent = CodesPage
+        SpeedBox.Text = tostring(value)
+    end)
 
-local CodesLayout = Instance.new("UIGridLayout")
-CodesLayout.CellSize = UDim2.new(0, 143, 0, 43)
-CodesLayout.CellPadding = UDim2.new(0, 4, 0, 5)
-CodesLayout.FillDirection = Enum.FillDirection.Horizontal
-CodesLayout.FillDirectionMaxCells = 4
-CodesLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-CodesLayout.SortOrder = Enum.SortOrder.LayoutOrder
-CodesLayout.Parent = CodesScroll
+    local Hint = makeText(
+        Content,
+        CurrentLanguage == "RU"
+            and "Настрой скорость переливания от 0.1 до 100"
+            or "Set animation speed from 0.1 to 100",
+        13
+    )
 
-local CodesData = {
+    Hint.Position = UDim2.new(0, 25, 0, 265)
+    Hint.Size = UDim2.new(1, -50, 0, 25)
+    Hint.TextColor3 = MUTED
+    Hint.TextXAlignment = Enum.TextXAlignment.Center
+
+    local Toggle = makeButton(
+        Content,
+        CurrentLanguage == "RU" and "RGB: ВКЛ" or "RGB: ON"
+    )
+
+    Toggle.Size = UDim2.new(0, 180, 0, 42)
+    Toggle.Position = UDim2.new(0.5, -90, 0, 315)
+
+    Toggle.MouseButton1Click:Connect(function()
+        RGBEnabled = not RGBEnabled
+
+        if RGBEnabled then
+            Toggle.Text = CurrentLanguage == "RU" and "RGB: ВКЛ" or "RGB: ON"
+        else
+            Toggle.Text = CurrentLanguage == "RU" and "RGB: ВЫКЛ" or "RGB: OFF"
+        end
+    end)
+end
+
+local codes = {
     {"Юра Юра", "103953736675768"},
-    {"C418 Key", "95772411739290"},
-    {"Мало тебя", "119639747686811"},
-    {"C00lkid", "94635984925376"},
-
     {"ЧСВ", "121868521456313"},
-    {"Бабулька", "90243355455318"},
-    {"trench boy", "140420698767512"},
-    {"Barbie", "72280182113154"},
-
     {"Да Да Нет Нет", "87021712935974"},
-    {"4:30", "118758878350292"},
-    {"Нежеголь Украина", "135001518170813"},
-    {"Barbie", "132255132560700"},
-
-    {"Бизнесмен", "99251035171025"},
-    {"AntiDote", "103819129330228"},
-    {"Лаки текк", "136314627320461"},
-    {"Да я русский", "74865649597403"},
-
     {"Повод - Морген", "91668250502992"},
-    {"Intelligensy", "73896930664817"},
-    {"Три полоски", "76399771617087"},
-    {"Чечня", "112928384872852"},
-
+    {"Бизнесмен", "99251035171025"},
     {"Да я рок звезда", "82354197666120"},
-    {"cachalot #2016", "98127054498202"},
-    {"Slava Гитлеру", "106746766859677"},
-    {"Japan?", "120880053875419"},
-
     {"Коч братан (фулл)", "118574325152271"},
+
+    {"C418 Key", "95772411739290"},
+    {"Бабулька", "90243355455318"},
+    {"4:30", "118758878350292"},
+    {"Antidote", "103819129330228"},
+    {"intelligensy", "73896930664817"},
+    {"cachalot #2016", "98127054498202"},
     {"i got love", "116105881409379"},
-    {"Фешин", ""},
+
+    {"Мало тебя", "119639747686811"},
+    {"trench boy", "140420698767512"},
+    {"Нежеголь Украина", "135001518170813"},
+    {"Лаки текк", "136314627320461"},
+    {"Три полоски", "76399771617087"},
+    {"Slava", "106746766859677"},
+    {"c00lkid", "94635984925376"},
+
+    {"Barbie", "72280182113154"},
+    {"Barbie", "132255132560700"},
+    {"Да я русский", "74865649597403"},
+    {"Чечня", "112928384872852"},
+    {"Japan?", "120880053875419"},
     {"Гимн твича", "95677706212116"}
 }
 
-local function copyText(value)
-    if not value or value == "" then
-        return
+local function createCodesPage()
+    clearContent()
+
+    createContentTitle(T("codes"))
+
+    local Scroll = Instance.new("ScrollingFrame")
+    Scroll.BackgroundTransparency = 1
+    Scroll.BorderSizePixel = 0
+    Scroll.Size = UDim2.new(1, -40, 1, -70)
+    Scroll.Position = UDim2.new(0, 20, 0, 55)
+    Scroll.ScrollBarThickness = 5
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Scroll.Parent = Content
+
+    local Grid = Instance.new("UIGridLayout")
+    Grid.CellSize = UDim2.new(0, 125, 0, 52)
+    Grid.CellPadding = UDim2.new(0, 7, 0, 7)
+    Grid.SortOrder = Enum.SortOrder.LayoutOrder
+    Grid.Parent = Scroll
+
+    for i, data in ipairs(codes) do
+        local button = Instance.new("TextButton")
+        button.BackgroundColor3 = Color3.fromRGB(245, 245, 247)
+        button.TextColor3 = Color3.fromRGB(20, 20, 25)
+        button.TextSize = 13
+        button.Font = Enum.Font.GothamBold
+        button.Text = data[1]
+        button.AutoButtonColor = false
+        button.LayoutOrder = i
+        button.Parent = Scroll
+        corner(button, 8)
+
+        button.MouseEnter:Connect(function()
+            button.BackgroundColor3 = Color3.fromRGB(220, 220, 225)
+        end)
+
+        button.MouseLeave:Connect(function()
+            button.BackgroundColor3 = Color3.fromRGB(245, 245, 247)
+        end)
+
+        button.MouseButton1Click:Connect(function()
+            pcall(function()
+                setclipboard(data[2])
+            end)
+
+            notify(T("copy") .. " " .. data[1])
+        end)
     end
 
-    pcall(function()
-        if setclipboard then
-            setclipboard(tostring(value))
-        end
+    task.defer(function()
+        Scroll.CanvasSize = UDim2.new(
+            0,
+            0,
+            0,
+            Grid.AbsoluteContentSize.Y + 10
+        )
     end)
 end
 
-for index, data in ipairs(CodesData) do
-    local button = createButton(
-        CodesScroll,
-        data[1],
-        UDim2.new(0, 143, 0, 43),
-        UDim2.new(0, 0, 0, 0),
-        WHITE
-    )
-
-    button.LayoutOrder = index
-    button.TextColor3 = BLACK
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 13
-
-    button.MouseButton1Click:Connect(function()
-        copyText(data[2])
-    end)
-end
-
-local AllScriptsPage = Instance.new("Frame")
-AllScriptsPage.Name = "AllScriptsPage"
-AllScriptsPage.BackgroundTransparency = 1
-AllScriptsPage.Size = UDim2.new(1, -105, 1, -50)
-AllScriptsPage.Position = UDim2.new(0, 8, 0, 45)
-AllScriptsPage.Visible = false
-AllScriptsPage.Parent = Main
-
-local AllScriptsTitle = createText(
-    AllScriptsPage,
-    "All scripts",
-    UDim2.new(1, -15, 0, 30),
-    UDim2.new(0, 5, 0, 0),
-    19
-)
-
-local ScriptButton1 = createButton(
-    AllScriptsPage,
-    "Infinity yield",
-    UDim2.new(0, 168, 0, 42),
-    UDim2.new(0, 5, 0, 28),
-    BURGUNDY
-)
-
-local ScriptButton2 = createButton(
-    AllScriptsPage,
-    "®4D",
-    UDim2.new(0, 168, 0, 42),
-    UDim2.new(0, 5, 0, 76),
-    BURGUNDY
-)
-
-local ScriptButton3 = createButton(
-    AllScriptsPage,
-    "Targeter",
-    UDim2.new(0, 168, 0, 42),
-    UDim2.new(0, 5, 0, 124),
-    BURGUNDY
-)
-
-local ScriptButton4 = createButton(
-    AllScriptsPage,
-    "Btr X client",
-    UDim2.new(0, 168, 0, 42),
-    UDim2.new(0, 5, 0, 172),
-    BURGUNDY
-)
-
-local EmptyScriptButton = createButton(
-    AllScriptsPage,
-    "",
-    UDim2.new(0, 168, 0, 42),
-    UDim2.new(0, 5, 0, 220),
-    BURGUNDY2
-)
-
-local MenuButton = createButton(
-    gui,
-    "MENU",
-    UDim2.new(0, 105, 0, 38),
-    UDim2.new(0, 70, 0.5, -19),
-    Color3.fromRGB(8, 8, 8)
-)
-
-MenuButton.TextSize = 15
-MenuButton.TextColor3 = WHITE
-MenuButton.Font = Enum.Font.GothamBold
-
-local MenuStroke = createStroke(
-    MenuButton,
-    Color3.fromRGB(255, 0, 0),
-    2
-)
-
-makeDraggable(Main, Header)
-makeDraggable(MenuButton)
-
-local function getRemote()
-    local re = ReplicatedStorage:FindFirstChild("RE")
-
-    if not re then
-        return nil
-    end
-
-    return re:FindFirstChild("1RPNam1eColo1r")
-end
-
-local function setNameColor(color)
-    local remote = getRemote()
-
-    if not remote then
-        return false
-    end
-
-    local success = pcall(function()
-        remote:FireServer("PickingRPNameColor", color)
-    end)
-
-    return success
-end
-
-local function colorFromPalette(x)
-    x = math.clamp(x, 0, 1)
-    return Color3.fromHSV(x, 1, 1)
-end
-
-local function updatePalettePosition(x)
-    x = math.clamp(x, 0, 1)
-
-    SelectedColor = colorFromPalette(x)
-
-    ColorKnob.Position = UDim2.new(x, 0, 0.5, 0)
-    ColorKnob.BackgroundColor3 = SelectedColor
-    ColorPreview.BackgroundColor3 = SelectedColor
-
-    if not RGBEnabled then
-        setNameColor(SelectedColor)
-    end
-end
-
-local paletteDragging = false
-
-local function setPaletteFromInput(inputPosition)
-    local absolute = Palette.AbsolutePosition
-    local size = Palette.AbsoluteSize
-
-    if size.X <= 0 then
-        return
-    end
-
-    local x = (inputPosition.X - absolute.X) / size.X
-
-    updatePalettePosition(x)
-end
-
-PaletteButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-
-        paletteDragging = true
-        setPaletteFromInput(input.Position)
-    end
-end)
-
-ColorKnob.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-
-        paletteDragging = true
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if not paletteDragging then
-        return
-    end
-
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-    or input.UserInputType == Enum.UserInputType.Touch then
-
-        setPaletteFromInput(input.Position)
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-
-        paletteDragging = false
-    end
-end)
-
-local function applySpeed()
-    local value = tonumber(SpeedBox.Text)
-
-    if not value then
-        SpeedBox.Text = tostring(AnimationSpeed)
-        return
-    end
-
-    value = math.clamp(value, 0.1, 100)
-
-    AnimationSpeed = value
-    SpeedBox.Text = tostring(value)
-
-    RGBGeneration = RGBGeneration + 1
-
-    if RGBEnabled then
-        task.wait()
-        startRGB()
-    end
-end
-
-SpeedBox.FocusLost:Connect(function()
-    applySpeed()
-end)
-
-SpeedBox:GetPropertyChangedSignal("Text"):Connect(function()
-    local value = tonumber(SpeedBox.Text)
-
-    if value and value > 100 then
-        SpeedBox.Text = "100"
-        AnimationSpeed = 100
-        RGBGeneration = RGBGeneration + 1
-    end
-end)
-
-local function blend(a, b, alpha)
-    return Color3.new(
-        a.R + (b.R - a.R) * alpha,
-        a.G + (b.G - a.G) * alpha,
-        a.B + (b.B - a.B) * alpha
-    )
-end
-
-local function stopRGB()
-    RGBEnabled = false
-    RGBGeneration = RGBGeneration + 1
-
-    setNameColor(SelectedColor)
-end
-
-function startRGB()
-    RGBEnabled = true
-    RGBGeneration = RGBGeneration + 1
-
-    local generation = RGBGeneration
-
+local function executeScript(url)
     task.spawn(function()
-        local phase = 0
+        local success, result = pcall(function()
+            return loadstring(game:HttpGet(url))()
+        end)
 
-        while RGBEnabled and generation == RGBGeneration do
-            local dt = RunService.RenderStepped:Wait()
-
-            if not RGBEnabled or generation ~= RGBGeneration then
-                break
-            end
-
-            local speed = math.clamp(
-                tonumber(AnimationSpeed) or 2,
-                0.1,
-                100
-            )
-
-            phase = phase + dt * speed
-
-            while phase >= 4 do
-                phase = phase - 4
-            end
-
-            local color
-
-            if phase < 1 then
-                color = blend(
-                    BLACK,
-                    SelectedColor,
-                    phase
-                )
-            elseif phase < 2 then
-                color = blend(
-                    SelectedColor,
-                    WHITE,
-                    phase - 1
-                )
-            elseif phase < 3 then
-                color = blend(
-                    WHITE,
-                    SelectedColor,
-                    phase - 2
-                )
-            else
-                color = blend(
-                    SelectedColor,
-                    BLACK,
-                    phase - 3
-                )
-            end
-
-            setNameColor(color)
+        if not success then
+            warn("Etraxon script error:", result)
+            notify("Script failed to load")
         end
     end)
 end
 
-RGBButton.MouseButton1Click:Connect(function()
-    if RGBEnabled then
-        stopRGB()
-        RGBButton.Text = "RGB: OFF"
-        RGBButton.BackgroundColor3 = BURGUNDY2
-    else
-        startRGB()
-        RGBButton.Text = "RGB: ON"
-        RGBButton.BackgroundColor3 = BURGUNDY
+local scripts = {
+    {
+        "Infinity yield",
+        "loadstring(game:HttpGet(\"https://rawscripts.net/raw/Universal-Script-Infinite-Yield-43437\"))()"
+    },
+    {
+        "®4D",
+        "loadstring(game:HttpGet(\"https://rawscripts.net/raw/Brookhaven-RP-R4D-script-no-key-17562\"))()"
+    },
+    {
+        "Targeter",
+        "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/ColorRed4/Apple-Targeter-V1.1/main/apple.main.lua\"))()"
+    },
+    {
+        "Btr X client",
+        "loadstring(game:HttpGet(\"https://btr.btrxclient.workers.dev/loader.lua\"))()"
+    },
+    {
+        "Animation Hub",
+        "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/7yd7/Hub/refs/heads/Branch/GUIS/Emotes.lua\"))()"
+    }
+}
+
+local function createAllPage()
+    clearContent()
+
+    createContentTitle(T("all"))
+
+    local Scroll = Instance.new("ScrollingFrame")
+    Scroll.BackgroundTransparency = 1
+    Scroll.BorderSizePixel = 0
+    Scroll.Size = UDim2.new(1, -40, 1, -70)
+    Scroll.Position = UDim2.new(0, 20, 0, 55)
+    Scroll.ScrollBarThickness = 5
+    Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Scroll.Parent = Content
+
+    local Layout = Instance.new("UIListLayout")
+    Layout.Padding = UDim.new(0, 8)
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Parent = Scroll
+
+    for i, data in ipairs(scripts) do
+        local button = Instance.new("TextButton")
+        button.BackgroundColor3 = SIDE
+        button.TextColor3 = TEXT
+        button.TextSize = 15
+        button.Font = Enum.Font.GothamBold
+        button.Text = data[1]
+        button.AutoButtonColor = false
+        button.Size = UDim2.new(0, 210, 0, 52)
+        button.LayoutOrder = i
+        button.Parent = Scroll
+        corner(button, 9)
+
+        local s = stroke(button, 1)
+        s.Color = Color3.fromRGB(135, 20, 55)
+
+        button.MouseEnter:Connect(function()
+            button.BackgroundColor3 = SIDE_HOVER
+        end)
+
+        button.MouseLeave:Connect(function()
+            button.BackgroundColor3 = SIDE
+        end)
+
+        button.MouseButton1Click:Connect(function()
+            local fn = loadstring(data[2])
+            if fn then
+                task.spawn(function()
+                    pcall(fn)
+                end)
+            end
+        end)
     end
-end)
 
-local function showPage(page, title)
-    HomePage.Visible = false
-    NamePage.Visible = false
-    CodesPage.Visible = false
-    AllScriptsPage.Visible = false
+    task.defer(function()
+        Scroll.CanvasSize = UDim2.new(
+            0,
+            0,
+            0,
+            Layout.AbsoluteContentSize.Y + 10
+        )
+    end)
+end
 
-    page.Visible = true
-    CurrentPage = title
-    Title.Text = title
+local function showPage(page)
+    CurrentPage = page
+
+    if page == "home" then
+        createHome()
+    elseif page == "name" then
+        createNamePage()
+    elseif page == "codes" then
+        createCodesPage()
+    elseif page == "all" then
+        createAllPage()
+    end
 end
 
 HomeButton.MouseButton1Click:Connect(function()
-    showPage(HomePage, "home")
+    showPage("home")
 end)
 
 NameButton.MouseButton1Click:Connect(function()
-    showPage(NamePage, "name / skin")
+    showPage("name")
 end)
 
 CodesButton.MouseButton1Click:Connect(function()
-    showPage(CodesPage, "codes")
+    showPage("codes")
 end)
 
-AllScripts.MouseButton1Click:Connect(function()
-    showPage(AllScriptsPage, "All scripts")
-end)
-
-TrollButton.MouseButton1Click:Connect(function()
-    showPage(HomePage, "troll")
-end)
-
-LanguageButton.MouseButton1Click:Connect(function()
-    if Language == "RU" then
-        Language = "ENG"
-
-        HomeLanguage.Text = "language:"
-        RGBTitle.Text = "RGB NAME"
-        SpeedTitle.Text = "speed animation"
-        SpeedHint.Text = "0.1 - 100"
-
-        HomeButton.Text = "home"
-        NameButton.Text = "name / skin"
-        TrollButton.Text = "troll"
-        CodesButton.Text = "codes"
-        AllScripts.Text = "All scripts"
-    else
-        Language = "RU"
-
-        HomeLanguage.Text = "язык:"
-        RGBTitle.Text = "RGB ИМЯ"
-        SpeedTitle.Text = "скорость"
-        SpeedHint.Text = "0.1 - 100"
-
-        HomeButton.Text = "главная"
-        NameButton.Text = "имя / скин"
-        TrollButton.Text = "тролль"
-        CodesButton.Text = "коды"
-        AllScripts.Text = "все скрипты"
-    end
+AllButton.MouseButton1Click:Connect(function()
+    showPage("all")
 end)
 
 MenuButton.MouseButton1Click:Connect(function()
-    MenuOpen = not MenuOpen
-    Main.Visible = MenuOpen
+    MainOpen = not MainOpen
+
+    if MainOpen then
+        Main.Visible = true
+        MenuButton.Text = T("menu")
+    else
+        Main.Visible = false
+        MenuButton.Text = T("menu")
+    end
 end)
 
-ScriptButton1.MouseButton1Click:Connect(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Infinite-Yield-43437"))()
-    end)
-end)
-
-ScriptButton2.MouseButton1Click:Connect(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://rawscripts.net/raw/Brookhaven-RP-R4D-script-no-key-17562"))()
-    end)
-end)
-
-ScriptButton3.MouseButton1Click:Connect(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/ColorRed4/Apple-Targeter-V1.1/main/apple.main.lua"))()
-    end)
-end)
-
-ScriptButton4.MouseButton1Click:Connect(function()
-    pcall(function()
-        loadstring(game:HttpGet("https://btr.btrxclient.workers.dev/loader.lua"))()
-    end)
-end)
-
-local borderConnection
-
-borderConnection = RunService.RenderStepped:Connect(function()
-    local t = os.clock() * 0.5
-
-    local color = Color3.fromHSV(
-        (t % 3) / 3,
-        1,
-        1
-    )
-
-    MainStroke.Color = color
-    SideStroke.Color = color
-    MenuStroke.Color = color
-end)
-
-showPage(HomePage, "home")
-
-updatePalettePosition(0)
-
-setNameColor(SelectedColor)
+showPage("home")
