@@ -16,9 +16,11 @@ end)
 local Language = "RU"
 local CurrentPage = "HOME"
 local MenuOpen = true
+
 local SelectedColor = Color3.fromRGB(255, 0, 0)
 local AnimationSpeed = 2
 local RGBEnabled = false
+local RGBBioEnabled = false
 
 local RGBGeneration = 0
 local RGBThread = nil
@@ -475,10 +477,19 @@ local RGBButton = button(
     NamePage,
     "RGB: OFF",
     UDim2.new(0, 125, 0, 36),
-    UDim2.new(0.5, -62, 1, -47)
+    UDim2.new(0.5, -132, 1, -47)
 )
 
 RGBButton.TextSize = 12
+
+local RGBBioButton = button(
+    NamePage,
+    "RGB: OFF",
+    UDim2.new(0, 125, 0, 36),
+    UDim2.new(0.5, 7, 1, -47)
+)
+
+RGBBioButton.TextSize = 12
 
 local CodesTitle = textLabel(
     CodesPage,
@@ -543,7 +554,28 @@ local CodesData = {
     {"Коч братан (фулл)", "118574325152271"},
     {"i got love", "116105881409379"},
     {"Фешин", ""},
-    {"Гимн твича", "95677706212116"}
+    {"Гимн твича", "95677706212116"},
+
+    {"Ты радуга", "92585638502970"},
+    {"Ларп", "71306564835472"},
+    {"Нетаньяху", "84197636580197"},
+    {"Без тебя", "99084115802261"},
+    {"Залетаю в мечеть", "126551933715459"},
+    {"Луксмаксинг", "86503267790406"},
+    {"Сделал миллион", "122036842434614"},
+    {"Громко", "96183066381930"},
+    {"imba dok", "113046329605558"},
+    {"Диско Панцер", "106561102974653"},
+    {"2020", "72628686993059"},
+    {"Туса Медуза", "120206691981778"},
+    {"Коч братан", "88926785631231"},
+    {"На Субару", "84788331299898"},
+    {"Голда V2", "74612331354602"},
+    {"Голда V1", "137501570448783"},
+    {"Таррант ремикс", "105009818909945"},
+    {"Весна 26 V.1", "97746747115329"},
+    {"Весна 26", "91299590639144"},
+    {"Весна 26 V.2", "92406194318429"}
 }
 
 local function copyText(value)
@@ -656,6 +688,18 @@ local function setNameColor(color)
     end)
 end
 
+local function setBioColor(color)
+    local remote = getNameRemote()
+
+    if not remote then
+        return
+    end
+
+    pcall(function()
+        remote:FireServer("PickingRPBioColor", color)
+    end)
+end
+
 local function colorFromPalette(x)
     return Color3.fromHSV(
         math.clamp(x, 0, 1),
@@ -679,8 +723,12 @@ local function updatePalette(x)
     ColorKnob.BackgroundColor3 = SelectedColor
     ColorPreview.BackgroundColor3 = SelectedColor
 
-  if not RGBEnabled then
+    if not RGBEnabled then
         setNameColor(SelectedColor)
+    end
+
+    if not RGBBioEnabled then
+        setBioColor(SelectedColor)
     end
 end
 
@@ -747,8 +795,6 @@ end
 local startRGB
 
 startRGB = function()
-    RGBEnabled = true
-
     RGBGeneration = RGBGeneration + 1
 
     local generation = RGBGeneration
@@ -760,10 +806,10 @@ startRGB = function()
     RGBThread = task.spawn(function()
         local phase = 0
 
-        while RGBEnabled and generation == RGBGeneration do
+        while (RGBEnabled or RGBBioEnabled) and generation == RGBGeneration do
             local dt = RunService.RenderStepped:Wait()
 
-            if not RGBEnabled or generation ~= RGBGeneration then
+            if (not RGBEnabled and not RGBBioEnabled) or generation ~= RGBGeneration then
                 break
             end
 
@@ -816,7 +862,13 @@ startRGB = function()
                 )
             end
 
-            setNameColor(color)
+            if RGBEnabled then
+                setNameColor(color)
+            end
+
+            if RGBBioEnabled then
+                setBioColor(color)
+            end
         end
     end)
 end
@@ -834,7 +886,7 @@ local function applySpeed()
     AnimationSpeed = value
     SpeedBox.Text = tostring(value)
 
-    if RGBEnabled then
+    if RGBEnabled or RGBBioEnabled then
         RGBGeneration = RGBGeneration + 1
         startRGB()
     end
@@ -846,11 +898,37 @@ end)
 
 RGBButton.MouseButton1Click:Connect(function()
     if RGBEnabled then
-        stopRGB()
+        RGBEnabled = false
         RGBButton.Text = "RGB: OFF"
+        RGBGeneration = RGBGeneration + 1
+
+        if RGBBioEnabled then
+            startRGB()
+        else
+            setNameColor(SelectedColor)
+        end
     else
-        startRGB()
+        RGBEnabled = true
         RGBButton.Text = "RGB: ON"
+        startRGB()
+    end
+end)
+
+RGBBioButton.MouseButton1Click:Connect(function()
+    if RGBBioEnabled then
+        RGBBioEnabled = false
+        RGBBioButton.Text = "RGB: OFF"
+        RGBGeneration = RGBGeneration + 1
+
+        if RGBEnabled then
+            startRGB()
+        else
+            setBioColor(SelectedColor)
+        end
+    else
+        RGBBioEnabled = true
+        RGBBioButton.Text = "RGB: ON"
+        startRGB()
     end
 end)
 
@@ -984,3 +1062,4 @@ showPage(HomePage, "home")
 updatePalette(0)
 
 setNameColor(SelectedColor)
+setBioColor(SelectedColor)
